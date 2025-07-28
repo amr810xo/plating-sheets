@@ -34,11 +34,14 @@ def parse_meal_codes(text):
 
 # --- Search all pages of a PDF for a Meal Code ---
 def contains_meal_code(pdf_file, code):
+    code = code.strip().upper()
     with pdfplumber.open(pdf_file) as pdf:
         for page in pdf.pages:
-            text = page.extract_text() or ""
-            if code in text.upper():
-                return True
+            text = page.extract_text()
+            if text:
+                words = text.replace("\n", " ").split()
+                if code in words:
+                    return True
     return False
 
 # --- Match and merge PDFs ---
