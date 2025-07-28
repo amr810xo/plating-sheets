@@ -44,6 +44,40 @@ def contains_meal_code(pdf_file, code):
 # --- Match and merge PDFs ---
 def match_and_merge(files, codes):
     file_map = {}
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+
+    total = len(codes)
+    for i, code in enumerate(codes):
+        found = False
+        for file in files:
+            if file not in file_map.values() and contains_meal_code(file, code):
+                file_map[code] = file
+                found = True
+                break
+        if not found:
+            st.warning(f"Meal Code '{code}' not found in any uploaded files.")
+
+        # Update progress bar
+        progress = (i + 1) / total
+        progress_bar.progress(progress)
+        status_text.text(f"Processing {i + 1} of {total} Meal Codes...")
+
+    # Merge matched files
+    merger = PdfMerger()
+    for code in codes:
+        if code in file_map:
+            pdf_reader = PdfReader(file_map[code])
+            merger.append(pdf_reader)
+
+    output = io.BytesIO()
+    merger.write(output)
+    merger.close()
+    output.seek(0)
+
+    status_text.text("✅ Finished combining!")
+    progress_bar.empty()
+    return output
 
     # Search all pages of each PDF and map the first file found for each code
     for code in codes:
